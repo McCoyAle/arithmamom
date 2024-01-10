@@ -7,21 +7,30 @@ import (
 )
 
 // generateQuestion generates a random math question.
-func generateQuestion() (string, int) {
+func generateQuestion(operation string) (string, int) {
 	rand.Seed(time.Now().UnixNano())
 	num1 := rand.Intn(10) + 1
 	num2 := rand.Intn(10) + 1
-	operator := []string{"+", "-", "*"}[rand.Intn(3)]
-	question := fmt.Sprintf("%d %s %d", num1, operator, num2)
+	var question string
 	var answer int
 
-	switch operator {
+	switch operation {
 	case "+":
+		question = fmt.Sprintf("%d + %d", num1, num2)
 		answer = num1 + num2
 	case "-":
+		question = fmt.Sprintf("%d - %d", num1, num2)
 		answer = num1 - num2
 	case "*":
+		question = fmt.Sprintf("%d * %d", num1, num2)
 		answer = num1 * num2
+	case "/":
+		// Ensure a whole number division for simplicity
+		answer = num1
+		num1 = answer * num2
+		question = fmt.Sprintf("%d / %d", num1, num2)
+	default:
+		panic("Invalid operation")
 	}
 
 	return question, answer
@@ -36,22 +45,31 @@ func getAnswerFromUser(question string) int {
 }
 
 func main() {
-	fmt.Println("Welcome to Math Learning App!")
+	fmt.Print("Please tell me your name: ")
+	var userName string
+	fmt.Scanln(&userName)
+
+	fmt.Printf("Welcome, %s, to Math with Addi's Mama!\n", userName)
+
+	// Code base for choosing math operation to perform
+	fmt.Print("Choose a mathematical operation (+, -, *, /): ")
+	var selectedOperation string
+	fmt.Scan(&selectedOperation)
 
 	score := 0
 	numQuestions := 5
 
 	for i := 0; i < numQuestions; i++ {
-		question, correctAnswer := generateQuestion()
+		question, correctAnswer := generateQuestion(selectedOperation)
 		userAnswer := getAnswerFromUser(question)
 
 		if userAnswer == correctAnswer {
-			fmt.Println("Correct!")
+			fmt.Printf("That's right %s!\n", userName)
 			score++
 		} else {
-			fmt.Printf("Wrong! The correct answer is %d.\n", correctAnswer)
+			fmt.Printf("The correct answer is %d.\n", correctAnswer)
 		}
 	}
 
-	fmt.Printf("\nGame Over! Your score is %d/%d.\n", score, numQuestions)
+	fmt.Printf("\nSorry, %s! The Game is Over. Your score is %d/%d.\n", userName, score, numQuestions)
 }
