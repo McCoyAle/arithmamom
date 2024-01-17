@@ -9,7 +9,7 @@ import (
 // generateQuestion generates a random math question.
 func generateQuestion(operation string) (string, int) {
 	rand.Seed(time.Now().UnixNano())
-	num1 := rand.Intn(50) + 1 // Limiting the range for better readability
+	num1 := rand.Intn(50) + 1
 	num2 := rand.Intn(50) + 1
 	var question string
 	var answer int
@@ -28,10 +28,10 @@ func generateQuestion(operation string) (string, int) {
 		answer = num1 * num2
 	case "/":
 		// Ensure a whole number division for simplicity
-		num1 = rand.Intn(10) + 1
 		num2 = rand.Intn(10) + 1
+		answer = num1
+		num1 = answer * num2
 		question = fmt.Sprintf("%d / %d", num1, num2)
-		answer = num1 / num2
 	default:
 		panic("Invalid operation")
 	}
@@ -74,5 +74,6 @@ func main() {
 		}
 	}
 
-	fmt.Printf("\nSorry, %s! The Game is Over. Your score is %d/%d.\n", userName, score, numQuestions)
+	percentage := float64(score) / float64(numQuestions) * 100
+	fmt.Printf("\nSorry, %s! The Game is Over. Your score is %.2f%%.\n", userName, percentage)
 }
