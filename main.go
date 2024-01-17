@@ -1,10 +1,29 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
+	"log"
 	"math/rand"
 	"time"
+
+	_ "github.com/lib/pq"
 )
+
+// User represents the user model.
+type User struct {
+	ID       int
+	Username string
+	Password string
+}
+
+// Score represents the math score model.
+type Score struct {
+	ID        int
+	UserID    int
+	Score     int
+	Timestamp time.Time
+}
 
 // generateQuestion generates a random math question.
 func generateQuestion(operation string) (string, int) {
@@ -47,33 +66,93 @@ func getAnswerFromUser(question string) int {
 	return userAnswer
 }
 
-func main() {
-	fmt.Print("Please tell me your name: ")
-	var userName string
-	fmt.Scanln(&userName)
-
-	fmt.Printf("Welcome, %s, to Math with Addi's Mama!\n", userName)
-
-	// Code base for choosing a math operation to perform
-	fmt.Print("Choose a mathematical operation (+, -, *, /): ")
-	var selectedOperation string
-	fmt.Scan(&selectedOperation)
-
-	score := 0
-	numQuestions := 5
-
-	for i := 0; i < numQuestions; i++ {
-		question, correctAnswer := generateQuestion(selectedOperation)
-		userAnswer := getAnswerFromUser(question)
-
-		if userAnswer == correctAnswer {
-			fmt.Printf("That's right, %s!\n", userName)
-			score++
-		} else {
-			fmt.Printf("The correct answer is %d.\n", correctAnswer)
-		}
+// connectToDB establishes a connection to the PostgreSQL database.
+func connectToDB() (*sql.DB, error) {
+	connStr := "user=username dbname=math_scores sslmode=disable"
+	db, err := sql.Open("postgres", connStr)
+	if err != nil {
+		return nil, err
 	}
 
-	percentage := float64(score) / float64(numQuestions) * 100
-	fmt.Printf("\nSorry, %s! The Game is Over. Your score is %.2f%%.\n", userName, percentage)
+	err = db.Ping()
+	if err != nil {
+		return nil, err
+	}
+
+	fmt.Println("Connected to the database")
+	return db, nil
+}
+
+// createUserTable creates the user table in the database.
+func createUserTable(db *sql.DB) error {
+	_, err := db.Exec(`
+		CREATE TABLE IF NOT EXISTS users (
+			id SERIAL PRIMARY KEY,
+			username VARCHAR(50) UNIQUE NOT NULL,
+			password VARCHAR(50) NOT NULL
+		)
+	`)
+
+	return err
+}
+
+// createScoreTable creates the score table in the database.
+func createScoreTable(db *sql.DB) error {
+	_, err := db.Exec(`
+		CREATE TABLE IF NOT EXISTS scores (
+			id SERIAL PRIMARY KEY,
+			user_id INTEGER REFERENCES users(id),
+			score INTEGER NOT NULL,
+			timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+		)
+	`)
+
+	return err
+}
+
+// insertUser inserts a new user into the database.
+func insertUser(db *sql.DB, user User) error {
+	_, err := db.Exec("INSERT INTO users (username, password) VALUES ($1, $2)", user.Username, user.Password)
+	return err
+}
+
+// insertScore inserts a new score into the database.
+func insertScore(db *sql.DB, score Score) error {
+	_, err := db.Exec("INSERT INTO scores (user_id, score) VALUES ($1, $2)", score.UserID, score.Score)
+	return err
+}
+
+func main() {
+	// Connect to the PostgreSQL database
+	db, err := connectToDB()
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
+
+	// Create user and score tables if they don't exist
+	err = createUserTable(db)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = createScoreTable(db)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Example: Insert a new user and score into the database
+	user := User{Username: "testuser", Password: "testpassword"}
+	err = insertUser(db, user)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	score := Score{UserID: 1, Score: 3}
+	err = insertScore(db, score)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println("User and score inserted into the database successfully")
 }
