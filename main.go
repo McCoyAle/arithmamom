@@ -1,10 +1,29 @@
 package main
 
 import (
+	"context"
 	"fmt"
+	"log"
 	"math/rand"
 	"time"
+
+	"github.com/jackc/pgx/v4/pgxpool"
 )
+
+// User represents the user model.
+type User struct {
+	ID       int
+	Username string
+	Password string
+}
+
+// Score represents the math score model.
+type Score struct {
+	ID        int
+	UserID    int
+	Score     int
+	Timestamp time.Time
+}
 
 // generateQuestion generates a random math question.
 func generateQuestion(operation string) (string, int) {
@@ -47,33 +66,103 @@ func getAnswerFromUser(question string) int {
 	return userAnswer
 }
 
-func main() {
-	fmt.Print("Please tell me your name: ")
-	var userName string
-	fmt.Scanln(&userName)
-
-	fmt.Printf("Welcome, %s, to Math with Addi's Mama!\n", userName)
-
-	// Code base for choosing a math operation to perform
-	fmt.Print("Choose a mathematical operation (+, -, *, /): ")
-	var selectedOperation string
-	fmt.Scan(&selectedOperation)
-
-	score := 0
-	numQuestions := 5
-
-	for i := 0; i < numQuestions; i++ {
-		question, correctAnswer := generateQuestion(selectedOperation)
-		userAnswer := getAnswerFromUser(question)
-
-		if userAnswer == correctAnswer {
-			fmt.Printf("That's right, %s!\n", userName)
-			score++
-		} else {
-			fmt.Printf("The correct answer is %d.\n", correctAnswer)
-		}
+// connectToDB establishes a connection to the PostgreSQL database.
+func connectToDB() (*pgxpool.Pool, error) {
+	conn, err := pgxpool.Connect(context.Background(), "postgresql://username@localhost/math_scores")
+	if err != nil {
+		return nil, fmt.Errorf("failed to connect to the database: %w", err)
 	}
 
-	percentage := float64(score) / float64(numQuestions) * 100
-	fmt.Printf("\nSorry, %s! The Game is Over. Your score is %.2f%%.\n", userName, percentage)
+	fmt.Println("Connected to the database")
+	return conn, nil
+}
+
+// createUserTable creates the user table in the database.
+func createUserTable(conn *pgxpool.Pool) error {
+	_, err := conn.Exec(context.Background(), `
+		CREATE TABLE IF NOT EXISTS users (
+			id SERIAL PRIMARY KEY,
+			username VARCHAR(50) UNIQUE NOT NULL,
+			password VARCHAR(50) NOT NULL
+		)
+	`)
+
+	if err != nil {
+		return fmt.Errorf("failed to create user table: %w", err)
+	}
+
+	return nil
+}
+
+// createScoreTable creates the score table in the database.
+func createScoreTable(conn *pgxpool.Pool) error {
+	_, err := conn.Exec(context.Background(), `
+		CREATE TABLE IF NOT EXISTS scores (
+			id SERIAL PRIMARY KEY,
+			user_id INTEGER REFERENCES users(id),
+			score INTEGER NOT NULL,
+			timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+		)
+	`)
+
+	if err != nil {
+		return fmt.Errorf("failed to create score table: %w", err)
+	}
+
+	return nil
+}
+
+// insertUser inserts a new user into the database.
+func insertUser(conn *pgxpool.Pool, user User) error {
+	_, err := conn.Exec(context.Background(), "INSERT INTO users (username, password) VALUES ($1, $2)", user.Username, user.Password)
+	if err != nil {
+		return fmt.Errorf("failed to insert user: %w", err)
+	}
+
+	return nil
+}
+
+// insertScore inserts a new score into the database.
+func insertScore(conn *pgxpool.Pool, score Score) error {
+	_, err := conn.Exec(context.Background(), "INSERT INTO scores (user_id, score) VALUES ($1, $2)", score.UserID, score.Score)
+	if err != nil {
+		return fmt.Errorf("failed to insert score: %w", err)
+	}
+
+	return nil
+}
+
+func main() {
+	// Connect to the PostgreSQL database
+	conn, err := connectToDB()
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer conn.Close()
+
+	// Create user and score tables if they don't exist
+	err = createUserTable(conn)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = createScoreTable(conn)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Example: Insert a new user and score into the database
+	user := User{Username: "testuser", Password: "testpassword"}
+	err = insertUser(conn, user)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	score := Score{UserID: 1, Score: 3}
+	err = insertScore(conn, score)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println("User and score inserted into the database successfully")
 }
