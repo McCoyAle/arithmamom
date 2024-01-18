@@ -5,9 +5,10 @@ import (
 	"fmt"
 	"log"
 	"math/rand"
+	"os"
 	"time"
 
-	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 // User represents the user model.
@@ -66,9 +67,22 @@ func getAnswerFromUser(question string) int {
 	return userAnswer
 }
 
-// connectToDB establishes a connection to the PostgreSQL database.
+// connectToDB establishes a connection to the PostgreSQL database using environment variables.
 func connectToDB() (*pgxpool.Pool, error) {
-	conn, err := pgxpool.Connect(context.Background(), "postgresql://username@localhost/math_scores")
+	dbUser := os.Getenv("DB_USER")
+	dbPassword := os.Getenv("DB_PASSWORD")
+	dbHost := os.Getenv("DB_HOST")
+	dbPort := os.Getenv("DB_PORT")
+	dbName := os.Getenv("DB_NAME")
+
+	connStr := fmt.Sprintf("postgresql://%s:%s@%s:%s/%s", dbUser, dbPassword, dbHost, dbPort, dbName)
+
+	config, err := pgxpool.ParseConfig(connStr)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse config: %w", err)
+	}
+
+	conn, err := pgxpool.ConnectConfig(context.Background(), config)
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to the database: %w", err)
 	}
@@ -133,7 +147,7 @@ func insertScore(conn *pgxpool.Pool, score Score) error {
 }
 
 func main() {
-	// Connect to the PostgreSQL database
+	// Connect to the PostgreSQL database using environment variables
 	conn, err := connectToDB()
 	if err != nil {
 		log.Fatal(err)
