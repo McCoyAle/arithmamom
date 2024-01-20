@@ -3,4 +3,12 @@ The Arithmamom Math application is a simple golang applications, tied to a postg
 
 ## Environment Setup
 
+### Golang and Application Code
+
+### Local Postgresql Database
+
+### Local Docker Setup
+
+### Kubernetes Cluster(s)
+
 ## Testing you code locally
