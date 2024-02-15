@@ -2,12 +2,15 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"math/rand"
-	"os"
 	"time"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -67,28 +70,62 @@ func getAnswerFromUser(question string) int {
 	return userAnswer
 }
 
-// connectToDB establishes a connection to the PostgreSQL database using environment variables.
+// connectToDB establishes a connection to the PostgreSQL database.
 func connectToDB() (*pgxpool.Pool, error) {
-	dbUser := os.Getenv("DB_USER")
-	dbPassword := os.Getenv("DB_PASSWORD")
-	dbHost := os.Getenv("DB_HOST")
-	dbPort := os.Getenv("DB_PORT")
-	dbName := os.Getenv("DB_NAME")
+	// Retrieve database credentials from AWS Secrets Manager
+	secretName := "arithmamom-app"
+	region := "us-east-1"
 
-	connStr := fmt.Sprintf("postgresql://%s:%s@%s:%s/%s", dbUser, dbPassword, dbHost, dbPort, dbName)
-
-	config, err := pgxpool.ParseConfig(connStr)
+	config, err := config.LoadDefaultConfig(context.TODO(), config.WithRegion(region))
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse config: %w", err)
+		return nil, fmt.Errorf("failed to load AWS config: %w", err)
 	}
 
-	conn, err := pgxpool.ConnectConfig(context.Background(), config)
+	// Create Secrets Manager client
+	svc := secretsmanager.NewFromConfig(config)
+
+	input := &secretsmanager.GetSecretValueInput{
+		SecretId: aws.String(secretName),
+	}
+
+	result, err := svc.GetSecretValue(context.TODO(), input)
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve secret value: %w", err)
+	}
+
+	// Parse the secret string to extract database credentials
+	var secretString string
+	if result.SecretString != nil {
+		secretString = *result.SecretString
+	} else {
+		return nil, fmt.Errorf("secret string is empty")
+	}
+
+	// Parse secret string to extract database credentials
+	var dbCredentials struct {
+		Username string `json:"username"`
+		Password string `json:"password"`
+		Host     string `json:"host"`
+		Port     int    `json:"port"`
+		Database string `json:"database"`
+	}
+
+	err = json.Unmarshal([]byte(secretString), &dbCredentials)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse database credentials: %w", err)
+	}
+
+	// Construct the connection string
+	connStr := fmt.Sprintf("user=%s password=%s host=%s port=%d dbname=%s", dbCredentials.Username, dbCredentials.Password, dbCredentials.Host, dbCredentials.Port, dbCredentials.Database)
+
+	// Create a new database pool
+	pool, err := pgxpool.New(context.Background(), connStr)
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to the database: %w", err)
 	}
 
 	fmt.Println("Connected to the database")
-	return conn, nil
+	return pool, nil
 }
 
 // createUserTable creates the user table in the database.
