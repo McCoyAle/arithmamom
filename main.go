@@ -106,7 +106,7 @@ func connectToDB() (*pgxpool.Pool, error) {
 		Username string `json:"username"`
 		Password string `json:"password"`
 		Host     string `json:"host"`
-		Port     int    `json:"port"`
+		Port     string `json:"port"`
 		Database string `json:"database"`
 	}
 
@@ -116,7 +116,7 @@ func connectToDB() (*pgxpool.Pool, error) {
 	}
 
 	// Construct the connection string
-	connStr := fmt.Sprintf("user=%s password=%s host=%s port=%d dbname=%s", dbCredentials.Username, dbCredentials.Password, dbCredentials.Host, dbCredentials.Port, dbCredentials.Database)
+	connStr := fmt.Sprintf("user=%s password=%s host=%s port=%s dbname=%s", dbCredentials.Username, dbCredentials.Password, dbCredentials.Host, dbCredentials.Port, dbCredentials.Database)
 
 	// Create a new database pool
 	pool, err := pgxpool.New(context.Background(), connStr)
