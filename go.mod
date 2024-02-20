@@ -1,4 +1,4 @@
-module math-app
+module arithmamom
 
 go 1.20
 

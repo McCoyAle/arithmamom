@@ -1,3 +1,4 @@
+// main.go
 package main
 
 import (
@@ -8,26 +9,13 @@ import (
 	"math/rand"
 	"time"
 
+	"github.com/McCoyAle/arithmamom/db"
+
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
-
-// User represents the user model.
-type User struct {
-	ID       int
-	Username string
-	Password string
-}
-
-// Score represents the math score model.
-type Score struct {
-	ID        int
-	UserID    int
-	Score     int
-	Timestamp time.Time
-}
 
 // generateQuestion generates a random math question.
 func generateQuestion(operation string) (string, int) {
@@ -69,6 +57,7 @@ func getAnswerFromUser(question string) int {
 	fmt.Scan(&userAnswer)
 	return userAnswer
 }
+
 
 // connectToDB establishes a connection to the PostgreSQL database.
 func connectToDB() (*pgxpool.Pool, error) {
@@ -183,34 +172,43 @@ func insertScore(conn *pgxpool.Pool, score Score) error {
 	return nil
 }
 
+
 func main() {
-	// Connect to the PostgreSQL database using environment variables
-	conn, err := connectToDB()
+	// Connect to the PostgreSQL database
+	conn, err := db.ConnectToDB()
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer conn.Close()
 
 	// Create user and score tables if they don't exist
-	err = createUserTable(conn)
+	err = db.CreateUserTable(conn)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	err = createScoreTable(conn)
+	err = db.CreateScoreTable(conn)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	// Example: Insert a new user and score into the database
-	user := User{Username: "testuser", Password: "testpassword"}
-	err = insertUser(conn, user)
-	if err != nil {
-		log.Fatal(err)
+	// Generate 10 random math questions and keep track of correct answers
+	numQuestions := 10
+	correctAnswers := 0
+	for i := 0; i < numQuestions; i++ {
+		operation := "+" // You can change the operation here if needed
+		question, answer := generateQuestion(operation)
+		userAnswer := getAnswerFromUser(question)
+		if userAnswer == answer {
+			fmt.Println("Correct!")
+			correctAnswers++
+		} else {
+			fmt.Println("Incorrect!")
+		}
 	}
 
-	score := Score{UserID: 1, Score: 3}
-	err = insertScore(conn, score)
+	// Insert score into the database
+	err = db.InsertScore(conn, 1, correctAnswers) // Assuming userID is 1
 	if err != nil {
 		log.Fatal(err)
 	}
