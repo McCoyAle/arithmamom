@@ -1,4 +1,4 @@
-module arithmamom
+module github.com/McCoyAle/arithmamom
 
 go 1.20
 
