@@ -6,12 +6,30 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
-	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
+
+// User represents the user model.
+type User struct {
+	ID       int
+	Username string
+	Password string
+	Name     string
+	Email    string
+}
+
+// Score represents the math score model.
+type Score struct {
+	ID        int
+	UserID    int
+	Score     int
+	Timestamp time.Time
+}
 
 // ConnectToDB establishes a connection to the PostgreSQL database.
 func ConnectToDB() (*pgxpool.Pool, error) {
@@ -62,7 +80,7 @@ func ConnectToDB() (*pgxpool.Pool, error) {
 	connStr := fmt.Sprintf("user=%s password=%s host=%s port=%s dbname=%s", dbCredentials.Username, dbCredentials.Password, dbCredentials.Host, dbCredentials.Port, dbCredentials.Database)
 
 	// Create a new database pool
-	pool, err := pgxpool.Connect(context.Background(), connStr)
+	pool, err := pgxpool.New(context.Background(), connStr)
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to the database: %w", err)
 	}
