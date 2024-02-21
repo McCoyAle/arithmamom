@@ -9,7 +9,7 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/McCoyAle/arithmamom/db"
+	"github.com/McCoyAle/arithmamom/db/db"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -57,7 +57,6 @@ func getAnswerFromUser(question string) int {
 	fmt.Scan(&userAnswer)
 	return userAnswer
 }
-
 
 // connectToDB establishes a connection to the PostgreSQL database.
 func connectToDB() (*pgxpool.Pool, error) {
@@ -153,7 +152,7 @@ func createScoreTable(conn *pgxpool.Pool) error {
 }
 
 // insertUser inserts a new user into the database.
-func insertUser(conn *pgxpool.Pool, user User) error {
+func insertUser(conn *pgxpool.Pool, user db.User) error {
 	_, err := conn.Exec(context.Background(), "INSERT INTO users (username, password) VALUES ($1, $2)", user.Username, user.Password)
 	if err != nil {
 		return fmt.Errorf("failed to insert user: %w", err)
@@ -163,7 +162,7 @@ func insertUser(conn *pgxpool.Pool, user User) error {
 }
 
 // insertScore inserts a new score into the database.
-func insertScore(conn *pgxpool.Pool, score Score) error {
+func insertScore(conn *pgxpool.Pool, score db.Score) error {
 	_, err := conn.Exec(context.Background(), "INSERT INTO scores (user_id, score) VALUES ($1, $2)", score.UserID, score.Score)
 	if err != nil {
 		return fmt.Errorf("failed to insert score: %w", err)
@@ -172,6 +171,13 @@ func insertScore(conn *pgxpool.Pool, score Score) error {
 	return nil
 }
 
+// In the main function or wherever the game logic is implemented
+// After the user has completed playing and a score has been calculated
+score := Score{UserID: 1, Score: calculatedScore} // Assuming the user ID is 1 and the score is calculated
+err = insertScore(conn, score)
+if err != nil {
+    log.Fatal(err)
+}
 
 func main() {
 	// Connect to the PostgreSQL database

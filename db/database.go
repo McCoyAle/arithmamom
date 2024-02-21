@@ -6,12 +6,30 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
+
+// User represents the user model.
+type User struct {
+	ID       int
+	Username string
+	Password string
+	Name     string
+	Email    string
+}
+
+// Score represents the math score model.
+type Score struct {
+	ID        int
+	UserID    int
+	Score     int
+	Timestamp time.Time
+}
 
 // ConnectToDB establishes a connection to the PostgreSQL database.
 func ConnectToDB() (*pgxpool.Pool, error) {
