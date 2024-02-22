@@ -51,7 +51,7 @@ func main() {
 	var userName string
 	fmt.Print("Please tell me your name: ")
 	fmt.Scanln(&userName)
-	fmt.Printf("Welcome, %s, to Math with Addi's Mama!\n", userName)
+	fmt.Printf("Welcome, %s, to Math with Arithmamom!\n", userName)
 
 	conn, err := db.ConnectToDB()
 	if err != nil {
