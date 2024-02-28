@@ -64,9 +64,37 @@ Will need to create a diagram that depicts the process for:
     - You can follow the golang tutorial in order to test your local setup and configuration [here](https://go.dev/doc/tutorial/getting-started).
 
 ## Building Go Applications:
+In this example we are building and using a simple mathematical operations applications with the following file structure:
 
-- Explain the basics of building Go applications using the go build command.
-- Discuss the importance of managing dependencies with tools like go mod.
+```
+arithmamom/
+  |- main.go
+  |- authentication/
+  |    |- jwt.go
+  |- db/
+  |    |- database.go
+  |- handlers/
+  |    |- login_handler.go
+  |    |- protected_handler.go
+  |- models/
+       |- user.go
+  |- public/
+       |- index.html
+       |- script.js
+       |- styles.css
+  |- main_test.go
+
+```
+
+**main.go**
+**authentication/jwt.go**
+**db/database.go**
+**handlers/login_handler.go**
+**handlers/protected_handler.go**
+**models/user.go**
+**public/index.html**
+**public/script.js**
+**public/styles.css**
 
 ## Introduction to Docker:
 
