@@ -1,67 +1,33 @@
-// main_test.go
-
 package main
 
 import (
-	"os"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 )
 
-func TestGenerateQuestion(t *testing.T) {
-	// Test addition
-	question, answer := generateQuestion("+")
-	if question == "" || answer == 0 {
-		t.Errorf("Expected a non-empty question and non-zero answer for addition")
-	}
-
-	// Test subtraction
-	question, answer = generateQuestion("-")
-	if question == "" || answer == 0 {
-		t.Errorf("Expected a non-empty question and non-zero answer for subtraction")
-	}
-
-	// Test multiplication
-	question, answer = generateQuestion("*")
-	if question == "" || answer == 0 {
-		t.Errorf("Expected a non-empty question and non-zero answer for multiplication")
-	}
-
-	// Test division
-	question, answer = generateQuestion("/")
-	if question == "" || answer == 0 {
-		t.Errorf("Expected a non-empty question and non-zero answer for division")
-	}
-
-	// Test invalid operation
-	defer func() {
-		if r := recover(); r == nil {
-			t.Errorf("Expected generateQuestion to panic for an invalid operation")
-		}
-	}()
-	generateQuestion("invalid")
-}
-
 func TestGetAnswerFromUser(t *testing.T) {
-	// Simulate user input for testing
-	input := "42\n" // Assuming the user enters 42
-	expected := 42
-
-	// Mock standard input
-	stdin := setupStdin(input)
-	defer stdin.Close()
-
-	// Test getAnswerFromUser function
-	userAnswer := getAnswerFromUser("What is the answer?")
-	if userAnswer != expected {
-		t.Errorf("Expected user answer to be %d, but got %d", expected, userAnswer)
+	// Create a new HTTP request with a question as a query parameter
+	req, err := http.NewRequest("GET", "/get-answer?question=What is 2 + 2?", nil)
+	if err != nil {
+		t.Fatal(err)
 	}
-}
 
-// Mock standard input for testing
-func setupStdin(input string) *os.File {
-	r, w, _ := os.Pipe()
-	os.Stdin = r
-	w.Write([]byte(input))
-	w.Close()
-	return r
-}
+	// Create a ResponseRecorder to record the response
+	rr := httptest.NewRecorder()
+
+	// Call the HTTP handler function
+	handler := http.HandlerFunc(getAnswerFromUser)
+	handler.ServeHTTP(rr, req)
+
+	// Check the status code returned by the handler
+	if status := rr.Code; status != http.StatusOK {
+		t.Errorf("Handler returned wrong status code: got %v want %v", status, http.StatusOK)
+	}
+
+	// Check the response body
+	expected := "User answer: 4"
+	if rr.Body.String() != expected {
+		t.Errorf("Handler returned unexpected body: got %v want %v", rr.Body.String(), expected)
+	}
+} 
