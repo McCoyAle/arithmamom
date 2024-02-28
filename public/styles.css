@@ -1,0 +1,15 @@
+.container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+    text-align: center;
+}
+
+input[type="number"] {
+    width: 100px;
+    margin-top: 10px;
+}
+
+button {
+    margin-top: 10px;
+}

@@ -145,3 +145,4 @@ func InsertScore(conn *pgxpool.Pool, userID, score int) error {
 
 	return nil
 }
+
