@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"math/rand"
+	"net/http"
 	"time"
 
 	"github.com/McCoyAle/arithmamom/db"
@@ -47,28 +48,8 @@ func getAnswerFromUser(question string) int {
 	return userAnswer
 }
 
-func main() {
-	var userName string
-	fmt.Print("Please tell me your name: ")
-	fmt.Scanln(&userName)
-	fmt.Printf("Welcome, %s, to Math with Addi's Mama!\n", userName)
-
-	conn, err := db.ConnectToDB()
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer conn.Close()
-
-	err = db.CreateUserTable(conn)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	err = db.CreateScoreTable(conn)
-	if err != nil {
-		log.Fatal(err)
-	}
-
+func handleMathQuiz(w http.ResponseWriter, r *http.Request) {
+	// Generate math quiz
 	numQuestions := 10
 	correctAnswers := 0
 	for i := 0; i < numQuestions; i++ {
@@ -76,20 +57,32 @@ func main() {
 		question, answer := generateQuestion(operation)
 		userAnswer := getAnswerFromUser(question)
 		if userAnswer == answer {
-			fmt.Printf("That's right %s!\n", userName)
 			correctAnswers++
-		} else {
-			fmt.Printf("Sorry! The correct answer is %d.\n", answer)
 		}
 	}
 
-	// Assuming userID is 1. You might want to dynamically retrieve it based on user information.
-	userID := 1
-	err = db.InsertScore(conn, userID, correctAnswers)
+	// Insert score into the database
+	dbConn, err := db.ConnectToDB()
 	if err != nil {
-		log.Fatal(err)
+		http.Error(w, fmt.Sprintf("failed to connect to the database: %v", err), http.StatusInternalServerError)
+		return
+	}
+	defer dbConn.Close()
+
+	err = db.InsertScore(dbConn, 1, correctAnswers) // Assuming userID is 1
+	if err != nil {
+		http.Error(w, fmt.Sprintf("failed to insert score: %v", err), http.StatusInternalServerError)
+		return
 	}
 
+	// Calculate score percentage
 	score := correctAnswers * 100 / numQuestions
-	fmt.Printf("\nSorry, %s! The Game is Over. Your score is %d/%d.\n", userName, score, numQuestions)
+
+	// Respond with score
+	fmt.Fprintf(w, "Your score is %d%%\n", score)
+}
+
+func main() {
+	http.HandleFunc("/quiz", handleMathQuiz)
+	log.Fatal(http.ListenAndServe(":8080", nil))
 }

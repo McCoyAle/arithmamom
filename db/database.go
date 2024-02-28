@@ -3,18 +3,38 @@ package db
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
 	"github.com/jackc/pgx/v4/pgxpool"
+	_ "github.com/lib/pq"
 )
 
+// User represents the user model.
+type User struct {
+	ID       int
+	Username string
+	Password string
+	Name     string
+	Email    string
+}
+
+// Score represents the math score model.
+type Score struct {
+	ID        int
+	UserID    int
+	Score     int
+	Timestamp time.Time
+}
+
 // ConnectToDB establishes a connection to the PostgreSQL database.
-func ConnectToDB() (*pgxpool.Pool, error) {
+func ConnectToDB() (*sql.DB, error) {
 	// Retrieve database credentials from AWS Secrets Manager
 	secretName := "arithmamom-app"
 	region := "us-east-1"
@@ -61,14 +81,14 @@ func ConnectToDB() (*pgxpool.Pool, error) {
 	// Construct the connection string
 	connStr := fmt.Sprintf("user=%s password=%s host=%s port=%s dbname=%s", dbCredentials.Username, dbCredentials.Password, dbCredentials.Host, dbCredentials.Port, dbCredentials.Database)
 
-	// Create a new database pool
-	pool, err := pgxpool.Connect(context.Background(), connStr)
+	// Create a new database connection
+	db, err := sql.Open("postgres", connStr)
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to the database: %w", err)
 	}
 
 	log.Println("Connected to the database")
-	return pool, nil
+	return db, nil
 }
 
 // CreateUserTable creates the user table in the database.
