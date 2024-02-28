@@ -46,8 +46,22 @@ Will need to create a diagram that depicts the process for:
 
 ## Setting Up a Basic Go Project:
 
-- Walk through the process of setting up a basic Go project.
-- Discuss the structure of a typical Go project.
+1. Install Go from the official [website](https://go.dev/doc/install) 
+    - As an alternative, and if you are using MAC, you can utilize ["homebrew"](https://formulae.brew.sh/formula/go). 
+    - Verify the installation using `go version`
+2. Setup Your Workspace
+    - Create your workspace directory
+        * `mdkir ~/go `
+    - Set the `GOPATH` environment variable to your workspace directory you just created. 
+        * `export GOPATH=~/go`
+        * `export PATH=$PATH:$GOPATH/bin`
+3. Configure Your Editor of Choice
+    - This is specific to your editor of choice. I am currently using Visual Studio Code. 
+    - You may want to install goenv in order to manage the different versions of golang available for your applications
+        * brew install goenv
+        * You can also install from the [golang website](https://pkg.go.dev/github.com/drewgonzales360/goenv#readme-install). 
+4. Verify Your Setup 
+    - You can follow the golang tutorial in order to test your local setup and configuration [here](https://go.dev/doc/tutorial/getting-started).
 
 ## Building Go Applications:
 
@@ -95,6 +109,10 @@ What this process does is allow the developer to build an image and complete tas
 - Become familiar with CLIs available for communicating with each software solution.
 - Embrace the community and its respective members for each. There are so many involved that are simply passionate about what they do and would love to converse with you. 
 - Get aquainted with the underlying foundations. This comment is specific to operating systems, networking and storage concepts. No matter what tool you work with these will be central to helping you fix an issue when the time comes. 
+
+#### Golang Official Documentation
+ - Golang Documenation [here](https://go.dev/doc/effective_go).
+ - Search for Golang packages or symbols [here](https://pkg.go.dev/)
 
 ## Conclusion
 
