@@ -41,8 +41,8 @@ func generateQuestion(operation string) (string, int) {
 	return question, answer
 }
 
-func getAnswerFromUser(question string) int {
-	var userAnswer int
+func getAnswerFromUser(question string) string {
+	var userAnswer string
 	fmt.Printf("What is %s? ", question)
 	fmt.Scan(&userAnswer)
 	return userAnswer
