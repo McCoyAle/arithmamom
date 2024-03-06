@@ -93,15 +93,3 @@ func main() {
 	fmt.Println("Server listening on port 8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
-
-	// Calculate score percentage
-	score := correctAnswers * 100 / numQuestions
-
-	// Respond with score
-	fmt.Fprintf(w, "Your score is %d%%\n", score)
-}
-
-func main() {
-	http.HandleFunc("/quiz", handleMathQuiz)
-	log.Fatal(http.ListenAndServe(":8080", nil))
-}
