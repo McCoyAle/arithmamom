@@ -1,11 +1,11 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"math/rand"
 	"net/http"
-	"strconv"
 	"time"
 )
 
@@ -41,11 +41,20 @@ func generateQuestion(operation string) (string, int) {
 	return question, answer
 }
 
-// handleMathQues handles the math Ques HTTP request.
+// handleMathQues handles the math ques HTTP request.
 func handleMathQues(w http.ResponseWriter, r *http.Request) {
-	// Generate math Ques
+	// Generate math ques
 	numQuestions := 10
 	correctAnswers := 0
+
+	// Retrieve user name from query parameter "name"
+	name := r.URL.Query().Get("name")
+	if name == "" {
+		http.Error(w, "Missing name parameter", http.StatusBadRequest)
+		return
+	}
+	fmt.Fprintf(w, "Welcome, %s!\n", name)
+
 	for i := 0; i < numQuestions; i++ {
 		operation := "+" // You can change the operation here if needed
 		question, answer := generateQuestion(operation)
@@ -53,23 +62,21 @@ func handleMathQues(w http.ResponseWriter, r *http.Request) {
 		// Print the question to the response
 		fmt.Fprintf(w, "Question %d: %s\n", i+1, question)
 
-		// Extract user answer from query parameter "answer"
-		userAnswer := r.URL.Query().Get("answer")
-		if userAnswer == "" {
-			http.Error(w, "Missing answer parameter", http.StatusBadRequest)
-			return
+		// Decode user answer from JSON request body
+		var userAnswer struct {
+			Answer int `json:"answer"`
 		}
-
-		// Parse user answer to int
-		userAnswerInt, err := strconv.Atoi(userAnswer)
-		if err != nil {
-			http.Error(w, "Invalid answer format", http.StatusBadRequest)
+		if err := json.NewDecoder(r.Body).Decode(&userAnswer); err != nil {
+			http.Error(w, "Failed to decode answer: "+err.Error(), http.StatusBadRequest)
 			return
 		}
 
 		// Check if user's answer matches the correct answer
-		if userAnswerInt == answer {
+		if userAnswer.Answer == answer {
 			correctAnswers++
+			fmt.Fprintf(w, "Correct!\n")
+		} else {
+			fmt.Fprintf(w, "Incorrect! The correct answer is %d.\n", answer)
 		}
 	}
 
@@ -80,7 +87,7 @@ func handleMathQues(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	// HTTP server setup
-	http.HandleFunc("/mathQues", handleMathQues)
+	http.HandleFunc("/mathques", handleMathQues)
 
 	// Start the HTTP server
 	fmt.Println("Server listening on port 8080")
