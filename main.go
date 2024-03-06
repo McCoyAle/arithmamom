@@ -5,11 +5,11 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
+	"strconv"
 	"time"
-
-	"github.com/McCoyAle/arithmamom/db"
 )
 
+// generateQuestion generates a random math question.
 func generateQuestion(operation string) (string, int) {
 	rand.Seed(time.Now().UnixNano())
 	num1 := rand.Intn(50) + 1
@@ -41,48 +41,48 @@ func generateQuestion(operation string) (string, int) {
 	return question, answer
 }
 
-func getAnswerFromUser(question string) string {
-	var userAnswer string
-	fmt.Printf("What is %s? ", question)
-	fmt.Scan(&userAnswer)
-	return userAnswer
-}
-
-func handleMathQuiz(w http.ResponseWriter, r *http.Request) {
-	// Generate math quiz
+// handleMathQues handles the math Ques HTTP request.
+func handleMathQues(w http.ResponseWriter, r *http.Request) {
+	// Generate math Ques
 	numQuestions := 10
 	correctAnswers := 0
 	for i := 0; i < numQuestions; i++ {
-		operation := "+"
+		operation := "+" // You can change the operation here if needed
 		question, answer := generateQuestion(operation)
-		userAnswer := getAnswerFromUser(question)
-		if userAnswer == answer {
+
+		// Print the question to the response
+		fmt.Fprintf(w, "Question %d: %s\n", i+1, question)
+
+		// Extract user answer from query parameter "answer"
+		userAnswer := r.URL.Query().Get("answer")
+		if userAnswer == "" {
+			http.Error(w, "Missing answer parameter", http.StatusBadRequest)
+			return
+		}
+
+		// Parse user answer to int
+		userAnswerInt, err := strconv.Atoi(userAnswer)
+		if err != nil {
+			http.Error(w, "Invalid answer format", http.StatusBadRequest)
+			return
+		}
+
+		// Check if user's answer matches the correct answer
+		if userAnswerInt == answer {
 			correctAnswers++
 		}
 	}
 
-	// Insert score into the database
-	dbConn, err := db.ConnectToDB()
-	if err != nil {
-		http.Error(w, fmt.Sprintf("failed to connect to the database: %v", err), http.StatusInternalServerError)
-		return
-	}
-	defer dbConn.Close()
-
-	err = db.InsertScore(dbConn, 1, correctAnswers) // Assuming userID is 1
-	if err != nil {
-		http.Error(w, fmt.Sprintf("failed to insert score: %v", err), http.StatusInternalServerError)
-		return
-	}
-
-	// Calculate score percentage
+	// Calculate score and send response
 	score := correctAnswers * 100 / numQuestions
-
-	// Respond with score
-	fmt.Fprintf(w, "Your score is %d%%\n", score)
+	fmt.Fprintf(w, "Your score is: %d", score)
 }
 
 func main() {
-	http.HandleFunc("/quiz", handleMathQuiz)
+	// HTTP server setup
+	http.HandleFunc("/mathQues", handleMathQues)
+
+	// Start the HTTP server
+	fmt.Println("Server listening on port 8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
