@@ -1,36 +1,49 @@
-/* Add your CSS styles here */
 body {
+    background-color: #e6e6fa; /* Light purple background */
     font-family: Arial, sans-serif;
 }
 
-h1 {
-    text-align: center;
+#container {
+    display: flex;
+    justify-content: center; /* Horizontally center */
+    align-items: center; /* Vertically center */
+    height: 80vh; /* Adjusted height */
+    margin-top: 10vh; /* Move towards the top */
 }
 
-#question {
+#prompt-container {
+    text-align: center; /* Center its children */
+}
+
+
+
+h1 {
+    color: #800080; /* Darker purple */
     margin-bottom: 20px;
 }
 
-#answer {
-    margin-bottom: 10px;
-    padding: 5px;
-    width: 200px;
+select {
+    padding: 10px;
+    font-size: 16px;
+    border-radius: 5px;
+    margin-bottom: 20px;
 }
 
-#submit {
-    padding: 5px 10px;
-    background-color: #007bff;
-    color: #fff;
+button {
+    padding: 10px 20px;
+    font-size: 16px;
     border: none;
+    border-radius: 5px;
     cursor: pointer;
+    background-color: #800080; /* Darker purple */
+    color: #fff;
 }
 
-#submit:hover {
-    background-color: #0056b3;
+button:hover {
+    background-color: #9932cc; /* Slightly lighter purple on hover */
 }
 
-#result {
-    margin-top: 20px;
-    font-weight: bold;
+#question {
+    font-size: 20px;
+    margin-bottom: 20px;
 }
-
