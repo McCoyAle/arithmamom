@@ -4,16 +4,40 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Arithmamom</title>
-    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div class="container">
-        <h1>Arithmamom</h1>
-        <div id="question"></div>
-        <input type="number" id="userAnswer" placeholder="Enter your answer">
-        <button onclick="submitAnswer()">Submit</button>
-        <div id="result"></div>
-    </div>
-    <script src="script.js"></script>
+    <h1>Math with Arithmamom</h1>
+    <div id="question"></div>
+    <input type="number" id="answer" placeholder="Enter your answer">
+    <button id="submit">Submit</button>
+    <div id="result"></div>
+
+    <script>
+        async function fetchQuestion() {
+            const response = await fetch('/mathques?name=TestUser', {
+                method: 'GET'
+            });
+            const data = await response.text();
+            document.getElementById('question').innerText = data;
+        }
+
+        async function submitAnswer() {
+            const answer = document.getElementById('answer').value;
+            const response = await fetch('/mathques?name=TestUser', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ answer: parseInt(answer) })
+            });
+            const result = await response.text();
+            document.getElementById('result').innerText = result;
+        }
+
+        window.onload = async function() {
+            await fetchQuestion();
+            document.getElementById('submit').addEventListener('click', submitAnswer);
+        };
+    </script>
 </body>
 </html>

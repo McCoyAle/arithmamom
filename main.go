@@ -1,19 +1,22 @@
 package main
 
 import (
-	"encoding/json"
+	"bytes"
 	"fmt"
 	"log"
 	"math/rand"
 	"net/http"
+	"strconv"
 	"time"
 )
 
+// Initialize a global random generator
+var r = rand.New(rand.NewSource(time.Now().UnixNano()))
+
 // generateQuestion generates a random math question.
 func generateQuestion(operation string) (string, int) {
-	rand.Seed(time.Now().UnixNano())
-	num1 := rand.Intn(50) + 1
-	num2 := rand.Intn(50) + 1
+	num1 := r.Intn(50) + 1
+	num2 := r.Intn(50) + 1
 	var question string
 	var answer int
 
@@ -25,12 +28,12 @@ func generateQuestion(operation string) (string, int) {
 		question = fmt.Sprintf("%d - %d", num1, num2)
 		answer = num1 - num2
 	case "*":
-		num1 = rand.Intn(10) + 1
-		num2 = rand.Intn(10) + 1
+		num1 = r.Intn(10) + 1
+		num2 = r.Intn(10) + 1
 		question = fmt.Sprintf("%d * %d", num1, num2)
 		answer = num1 * num2
 	case "/":
-		num2 = rand.Intn(10) + 1
+		num2 = r.Intn(10) + 1
 		answer = num1
 		num1 = answer * num2
 		question = fmt.Sprintf("%d / %d", num1, num2)
@@ -53,40 +56,49 @@ func handleMathQues(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Missing name parameter", http.StatusBadRequest)
 		return
 	}
-	fmt.Fprintf(w, "Welcome, %s!\n", name)
+
+	var responseBuffer bytes.Buffer // Create a buffer to accumulate the response
+
+	// Write the welcome message to the response buffer
+	responseBuffer.WriteString(fmt.Sprintf("Welcome, %s!\n", name))
 
 	for i := 0; i < numQuestions; i++ {
 		operation := "+" // You can change the operation here if needed
 		question, answer := generateQuestion(operation)
 
-		// Print the question to the response
-		fmt.Fprintf(w, "Question %d: %s\n", i+1, question)
+		// Print the question to the response buffer
+		responseBuffer.WriteString(fmt.Sprintf("Question %d: %s\n", i+1, question))
 
-		// Decode user answer from JSON request body
-		var userAnswer struct {
-			Answer int `json:"answer"`
-		}
-		if err := json.NewDecoder(r.Body).Decode(&userAnswer); err != nil {
-			http.Error(w, "Failed to decode answer: "+err.Error(), http.StatusBadRequest)
+		// Decode user answer from query parameter "answer"
+		userAnswerStr := r.URL.Query().Get("answer")
+		userAnswer, err := strconv.Atoi(userAnswerStr)
+		if err != nil {
+			http.Error(w, "Failed to parse answer: "+err.Error(), http.StatusBadRequest)
 			return
 		}
 
 		// Check if user's answer matches the correct answer
-		if userAnswer.Answer == answer {
+		if userAnswer == answer {
 			correctAnswers++
-			fmt.Fprintf(w, "Correct!\n")
+			responseBuffer.WriteString("Correct!\n")
 		} else {
-			fmt.Fprintf(w, "Incorrect! The correct answer is %d.\n", answer)
+			responseBuffer.WriteString(fmt.Sprintf("Incorrect! The correct answer is %d.\n", answer))
 		}
 	}
 
-	// Calculate score and send response
+	// Calculate score and append it to the response buffer
 	score := correctAnswers * 100 / numQuestions
-	fmt.Fprintf(w, "Your score is: %d", score)
+	responseBuffer.WriteString(fmt.Sprintf("Your score is: %d", score))
+
+	// Write the accumulated response from the buffer to the response writer
+	w.Write(responseBuffer.Bytes())
 }
 
 func main() {
-	// HTTP server setup
+	// Serve static files (HTML, CSS, JavaScript) from the "static" directory
+	http.Handle("/", http.FileServer(http.Dir("public")))
+
+	// Define HTTP endpoints and handlers
 	http.HandleFunc("/mathques", handleMathQues)
 
 	// Start the HTTP server

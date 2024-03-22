@@ -1,15 +1,36 @@
-.container {
-    max-width: 600px;
-    margin: 0 auto;
-    padding: 20px;
+/* Add your CSS styles here */
+body {
+    font-family: Arial, sans-serif;
+}
+
+h1 {
     text-align: center;
 }
 
-input[type="number"] {
-    width: 100px;
-    margin-top: 10px;
+#question {
+    margin-bottom: 20px;
 }
 
-button {
-    margin-top: 10px;
+#answer {
+    margin-bottom: 10px;
+    padding: 5px;
+    width: 200px;
 }
+
+#submit {
+    padding: 5px 10px;
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    cursor: pointer;
+}
+
+#submit:hover {
+    background-color: #0056b3;
+}
+
+#result {
+    margin-top: 20px;
+    font-weight: bold;
+}
+
