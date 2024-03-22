@@ -6,7 +6,6 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
-	"strconv"
 	"time"
 )
 
@@ -46,10 +45,6 @@ func generateQuestion(operation string) (string, int) {
 
 // handleMathQues handles the math ques HTTP request.
 func handleMathQues(w http.ResponseWriter, r *http.Request) {
-	// Generate math ques
-	numQuestions := 10
-	correctAnswers := 0
-
 	// Retrieve user name from query parameter "name"
 	name := r.URL.Query().Get("name")
 	if name == "" {
@@ -57,48 +52,28 @@ func handleMathQues(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var responseBuffer bytes.Buffer // Create a buffer to accumulate the response
+	// Generate a random math question
+	operation := "+"                           // You can change the operation here if needed
+	question, _ := generateQuestion(operation) // Ignore the answer for now
+
+	// Prepare the response buffer
+	var responseBuffer bytes.Buffer
 
 	// Write the welcome message to the response buffer
 	responseBuffer.WriteString(fmt.Sprintf("Welcome, %s!\n", name))
 
-	for i := 0; i < numQuestions; i++ {
-		operation := "+" // You can change the operation here if needed
-		question, answer := generateQuestion(operation)
-
-		// Print the question to the response buffer
-		responseBuffer.WriteString(fmt.Sprintf("Question %d: %s\n", i+1, question))
-
-		// Decode user answer from query parameter "answer"
-		userAnswerStr := r.URL.Query().Get("answer")
-		userAnswer, err := strconv.Atoi(userAnswerStr)
-		if err != nil {
-			http.Error(w, "Failed to parse answer: "+err.Error(), http.StatusBadRequest)
-			return
-		}
-
-		// Check if user's answer matches the correct answer
-		if userAnswer == answer {
-			correctAnswers++
-			responseBuffer.WriteString("Correct!\n")
-		} else {
-			responseBuffer.WriteString(fmt.Sprintf("Incorrect! The correct answer is %d.\n", answer))
-		}
-	}
-
-	// Calculate score and append it to the response buffer
-	score := correctAnswers * 100 / numQuestions
-	responseBuffer.WriteString(fmt.Sprintf("Your score is: %d", score))
+	// Print the question to the response buffer
+	responseBuffer.WriteString(fmt.Sprintf("Question: %s\n", question))
 
 	// Write the accumulated response from the buffer to the response writer
 	w.Write(responseBuffer.Bytes())
 }
 
 func main() {
-	// Serve static files (HTML, CSS, JavaScript) from the "static" directory
+	// Serve static files (HTML, CSS, JavaScript) from the "public" directory
 	http.Handle("/", http.FileServer(http.Dir("public")))
 
-	// Define HTTP endpoints and handlers
+	// Define HTTP endpoint for math questions and its handler
 	http.HandleFunc("/mathques", handleMathQues)
 
 	// Start the HTTP server
